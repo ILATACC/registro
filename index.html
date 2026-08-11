@@ -1094,6 +1094,8 @@ function showToast(msg){
   t.classList.add('show');
   setTimeout(()=> t.classList.remove('show'), 2600);
 }
+const EDGE_FUNCTION_URL = 'https://wvkmhezoriwbrnpicxsb.supabase.co/functions/v1/evento-preview';
+
 function openShareMenu(title, text, url){
   const encUrl = encodeURIComponent(url);
   const encText = encodeURIComponent(text);
@@ -1119,7 +1121,7 @@ function openShareMenu(title, text, url){
   openModal('shareOverlay');
 }
 document.getElementById('shareBtn').addEventListener('click', ()=>{
-  openShareMenu('ILATACC — Taquilla de eventos', 'Consulta la cartelera de eventos del ILATACC y regístrate:', window.location.href);
+  openShareMenu('ILATACC — Taquilla de eventos', 'Consulta la cartelera de eventos del ILATACC y regístrate:', EDGE_FUNCTION_URL);
 });
 document.getElementById('shareEventBtn').addEventListener('click', ()=>{
   if(!selectedEvent) return;
@@ -1127,7 +1129,7 @@ document.getElementById('shareEventBtn').addEventListener('click', ()=>{
 });
 function shareEvent(id){
   const ev = EVENTOS.find(e=>e.id===id);
-  openShareMenu(ev.titulo, `${ev.titulo} · ${ev.fecha} · ${ev.lugar}. Regístrate aquí:`, window.location.href + '#' + ev.id);
+  openShareMenu(ev.titulo, `${ev.titulo} · ${ev.fecha} · ${ev.lugar}. Regístrate aquí:`, `${EDGE_FUNCTION_URL}?slug=${encodeURIComponent(ev.slug)}`);
 }
 
 /* ---------- franja de confianza ---------- */
