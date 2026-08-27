@@ -44,6 +44,9 @@ docs/guia-produccion.md            → guía completa de integración y protocol
 | 0014 | `evitar_duplicado_exacto_por_evento` | Evita que la misma persona (nombre+correo+teléfono exactos) se registre dos veces al mismo evento |
 | 0015 | `edad_obligatoria` | La edad ahora es obligatoria también a nivel de base de datos, igual que nombre/correo/teléfono |
 | 0016 | `genero_asistente` | Campo de género (opcional/sensible) — base para el futuro sistema de reportes demográficos |
+| 0017 | `encuesta_calidad` | Sistema completo de Encuesta de Calidad post-evento — token por asistente, respuestas, promedios |
+| 0018 | `cotizador_espacios` | Tabla de cotizaciones de renta de espacios — previa a la creación del evento real |
+| 0019 | `folio_cotizaciones` | Folio consecutivo legible (COT-2026-0001) generado automáticamente por cotización |
 
 ## Edge Functions desplegadas
 
