@@ -1322,6 +1322,11 @@ function resetForm(){
   document.getElementById('eventForm').reset();
   neFechaFinTocadaManualmente = false;
   document.getElementById('editingId').value = '';
+  // Solo para eventos nuevos: el propio selector de fecha del navegador ya no
+  // deja elegir un día pasado (al editar uno existente no se restringe).
+  const hoyMin = new Date().toISOString().slice(0,10);
+  document.getElementById('neFecha').min = hoyMin;
+  document.getElementById('neFechaFin').min = hoyMin;
   document.getElementById('formTitle').textContent = 'Nuevo evento';
   document.getElementById('formSub').textContent = 'Publica una función, cátedra, muestra o exposición en la cartelera.';
   document.getElementById('formSubmitBtn').textContent = 'Publicar evento';
@@ -1344,6 +1349,10 @@ function resetForm(){
 function loadEventIntoForm(ev){
   document.getElementById('editingId').value = ev.id;
   neFechaFinTocadaManualmente = true; // ya trae su propia fecha de término guardada, no la sobrescribas
+  // Al editar (incluso un evento ya pasado), no se restringe el selector de fecha —
+  // esa restricción es solo para cuando se crea un evento nuevo.
+  document.getElementById('neFecha').removeAttribute('min');
+  document.getElementById('neFechaFin').removeAttribute('min');
   document.getElementById('formTitle').textContent = 'Editar evento';
   document.getElementById('formSub').textContent = `Modificando "${ev.titulo}".`;
   document.getElementById('formSubmitBtn').textContent = 'Guardar cambios';
@@ -1423,6 +1432,16 @@ function slugify(str){
 document.getElementById('eventForm').addEventListener('submit', async (e)=>{
   e.preventDefault();
   const editingId = document.getElementById('editingId').value;
+
+  // Solo aplica al CREAR un evento nuevo — si ya existe (se está editando), no se bloquea,
+  // para no impedir corregir datos de un evento que legítimamente ya pasó.
+  const fechaInicioVal = document.getElementById('neFecha').value;
+  const hoyVal = new Date().toISOString().slice(0,10);
+  if(!editingId && fechaInicioVal < hoyVal){
+    showToast('No puedes crear un evento nuevo con una fecha que ya pasó');
+    return;
+  }
+
   const tipoVal = document.getElementById('neTipo').value;
   const etiqueta = document.getElementById('neEtiqueta').value.trim();
   const recovery = document.getElementById('neRecoveryToggle').checked;
@@ -1579,15 +1598,17 @@ function renderCalendarioDiaDetalle(fecha){
   const box = document.getElementById('calendarioDiaDetalle');
   const eventosDia = EVENTOS.filter(ev => fecha >= ev.fecha && fecha <= (ev.fecha_fin || ev.fecha));
   const fechaFmt = new Date(fecha + 'T00:00:00').toLocaleDateString('es-MX', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  const hoy = new Date().toISOString().slice(0,10);
+  const esPasado = fecha < hoy;
 
   const encabezado = `
     <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:12px;">
       <h3 style="font-size:14px; font-weight:700; text-transform:capitalize; margin:0;">${fechaFmt}</h3>
-      <button type="button" id="calCrearEventoBtn" style="background:var(--ilatacc-teal); color:#fff; border:none; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:6px; cursor:pointer;">+ Crear evento este día</button>
+      ${esPasado ? '' : `<button type="button" id="calCrearEventoBtn" style="background:var(--ilatacc-teal); color:#fff; border:none; padding:8px 16px; font-size:12.5px; font-weight:700; border-radius:6px; cursor:pointer;">+ Crear evento este día</button>`}
     </div>`;
 
   if(!eventosDia.length){
-    box.innerHTML = encabezado + `<p style="color:var(--muted); font-size:13px;">No hay eventos programados este día — disponible.</p>`;
+    box.innerHTML = encabezado + `<p style="color:var(--muted); font-size:13px;">${esPasado ? 'Día ya pasado — consulta "🗄 Eventos Anteriores" si buscas algo de esta fecha.' : 'No hay eventos programados este día — disponible.'}</p>`;
   } else {
     box.innerHTML = encabezado +
       eventosDia.map(ev => `
@@ -1598,13 +1619,15 @@ function renderCalendarioDiaDetalle(fecha){
       `).join('');
   }
 
-  document.getElementById('calCrearEventoBtn').addEventListener('click', ()=>{
-    resetForm();
-    document.getElementById('neFecha').value = fecha;
-    document.getElementById('neFechaFin').value = fecha;
-    goToView('formulario');
-    showToast(`Nuevo evento — fecha ya lista: ${fechaFmt}`);
-  });
+  if(!esPasado){
+    document.getElementById('calCrearEventoBtn').addEventListener('click', ()=>{
+      resetForm();
+      document.getElementById('neFecha').value = fecha;
+      document.getElementById('neFechaFin').value = fecha;
+      goToView('formulario');
+      showToast(`Nuevo evento — fecha ya lista: ${fechaFmt}`);
+    });
+  }
 
   box.querySelectorAll('[data-ir-evento]').forEach(fila=>{
     fila.addEventListener('click', ()=>{
